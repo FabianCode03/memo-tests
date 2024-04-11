@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,140 +7,140 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Enteties
 model User {
-  id             BigInt      @id @default(autoincrement())
-  name           String
-  email          String      @unique
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  // local attributes
+  id        BigInt   @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // foreign keys and related entityID arrays
   settingsID     Int?        @unique
   profileImageID BigInt?     @unique
   groups         GroupUser[]
   favoriteCards  Card[]
 
-  // Relations to other models
-  // profilePictureID  Int?
-  // profilePicture    Image?      @relation(fields: [profilePictureID], references: [id])
-  // groupsTheUserIsIn GroupUser[]
+  // prisma intern 1:1 and 1:n relation definitions (not needed for queries)
   profileImage Image?    @relation(fields: [profileImageID], references: [id])
   settings     Settings? @relation(fields: [settingsID], references: [id])
 }
 
 model Group {
-  id           BigInt      @id @default(autoincrement())
+  // local attributes
+  id           BigInt    @id @default(autoincrement())
   title        String
   description  String?
-  isSolo       Boolean     @default(false)
+  isSolo       Boolean   @default(false)
   deletionDate DateTime?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  thumbnailID  BigInt?     @unique
-  users        GroupUser[]
-  cards        Card[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  // Relations to other models
-  // thumbnailID  Int?
-  // thumbnail    Image?      @relation(fields: [thumbnailID], references: [id])
-  // cardsInGroup GroupCard[]
-  // usersInGroup GroupUser[]
+  // foreign keys and related entityID arrays
+  thumbnailID BigInt?     @unique
+  users       GroupUser[]
+  cards       Card[]
+
+  // prisma intern 1:1 and 1:n relation definitions (not needed for queries)
   thumbnail Image? @relation(fields: [thumbnailID], references: [id])
 }
 
 model Card {
-  id                BigInt    @id @default(autoincrement())
-  title             String
-  description       String?
-  deletionDate      DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  // local attributes
+  id           BigInt    @id @default(autoincrement())
+  title        String
+  description  String?
+  deletionDate DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // foreign keys and related entityID arrays
   groupId           BigInt?
   backgroundColorId Int
+  images            Image[]
+  quotes            Quote[]
+  voiceRecordings   VoiceRecording[]
+  favoriteOf        User[]
 
-  images          Image[]
-  quotes          Quote[]
-  voiceRecordings VoiceRecording[]
-  favoriteOf      User[]
-
-  // Relations to other models
-  // groupsCardIsIn        GroupCard[]
-  // imagesInCard          CardImage[]
-  // quotesInCard          CardQuote[]
-  // voiceRecordingsInCard CardVoiceRecording[]
-  // backgroundColorOfCard CardBackgroundColor[]
+  // prisma intern 1:1 and 1:n relation definitions (not needed for queries)
   group           Group?          @relation(fields: [groupId], references: [id])
   backgroundColor BackgroundColor @relation(fields: [backgroundColorId], references: [id])
 }
 
 model Image {
-  id                 BigInt   @id @default(autoincrement())
-  url                String   @unique
-  width              Int
-  height             Int
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  // local attributes
+  id        BigInt   @id @default(autoincrement())
+  url       String   @unique
+  width     Int
+  height    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // foreign keys and related entityID arrays
   cardId             BigInt?
   profileImageUserID User?
   thumnailForGroupID Group?
-  originalID         BigInt?  @unique
-  scaledDownID       BigInt?  @unique
-  // Relations to other models
-  // scaledDownId                Int?        @unique // ID of the scaled down version of this image
-  // scaledDown                  Image?      @relation("ImageScaling", fields: [scaledDownId], references: [id]) // The scaled down version of this image
-  // original                    Image?      @relation("ImageScaling") // The original image, of which this is a scaled down version
-  // groupsImageIsThumbnailFor   Group[]
-  // usersImageIsProfileImageFor User[]
-  // cardsImageIsPartOf          CardImage[]
-  card               Card?    @relation(fields: [cardId], references: [id])
-  scaledDown         Image?   @relation("ImageScaling")
-  original           Image?   @relation("ImageScaling", fields: [originalID], references: [id])
+  originalID         BigInt? @unique
+  scaledDownID       BigInt? @unique
+
+  // prisma intern 1:1 and 1:n relation definitions (not needed for queries)
+  card       Card?  @relation(fields: [cardId], references: [id])
+  scaledDown Image? @relation("ImageScaling")
+  original   Image? @relation("ImageScaling", fields: [originalID], references: [id])
 }
 
 model Quote {
+  // local attributes
   id        BigInt   @id @default(autoincrement())
   text      String
   author    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  cardId    BigInt?
 
-  // Relations to other models
-  // cardsQuoteIsPartOf CardQuote[]
+  // foreign keys and related entityID arrays
+  cardId BigInt?
+
+  // prisma intern 1:1 and 1:n relation definitions (not needed for queries)
   Card Card? @relation(fields: [cardId], references: [id])
 }
 
 model VoiceRecording {
+  // local attributes
   id        BigInt   @id @default(autoincrement())
   url       String   @unique
   length    BigInt
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  cardId    BigInt?
 
-  // Relations to other models
-  // cardsVoiceRecordingIsPartOf CardVoiceRecording[]
+  // foreign keys and related entityID arrays
+  cardId BigInt?
+
+  // prisma intern 1:1 and 1:n relation definitions (not needed for queries)
   Card Card? @relation(fields: [cardId], references: [id])
 }
 
 model BackgroundColor {
+  // local attributes
   id        Int      @id @default(autoincrement())
   value     String   @unique
   darkText  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations to other models
-  // cardsWithThisBackgroundColor CardBackgroundColor[]
+  // foreign keys and related entityID arrays
   Card Card[]
 }
 
 model Settings {
+  // local attributes
   id        Int      @id @default(autoincrement())
   userId    Int
   darkMode  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  User      User?
+
+  // foreign keys and related entityID arrays
+  User User?
 }
 
 enum Status {
@@ -158,96 +152,20 @@ enum Status {
 }
 
 model GroupUser {
+  // local attributes
   id        BigInt   @id @default(autoincrement())
-  userId    BigInt
-  groupId   BigInt
   status    Status   @default(ACTIVE_USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // foreign keys and related entityID arrays
+  userId  BigInt
+  groupId BigInt
+
+  // prisma intern 1:1 and 1:n relation definitions (not needed for queries)
   user  User  @relation(fields: [userId], references: [id])
   group Group @relation(fields: [groupId], references: [id])
 
+  // shared unique constraint
   @@unique([userId, groupId])
 }
-
-// n:m-Relationen
-// model GroupUser {
-//   id         Int      @id @unique @default(autoincrement())
-//   userId     Int
-//   groupId    Int
-//   isAdmin    Boolean  @default(false)
-//   isFavorite Boolean  @default(false)
-//   createdAt  DateTime @default(now())
-//   updatedAt  DateTime @updatedAt
-
-//   User  User  @relation(fields: [userId], references: [id])
-//   Group Group @relation(fields: [groupId], references: [id])
-
-//   @@unique([userId, groupId])
-// }
-
-// model GroupCard {
-//   id        Int      @id @unique @default(autoincrement())
-//   groupId   Int
-//   cardId    Int
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-
-//   Group Group @relation(fields: [groupId], references: [id])
-//   Card  Card  @relation(fields: [cardId], references: [id])
-
-//   @@unique([groupId, cardId])
-// }
-
-// model CardImage {
-//   id        Int      @id @unique @default(autoincrement())
-//   cardId    Int
-//   imageId   Int
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-
-//   Card  Card  @relation(fields: [cardId], references: [id])
-//   Image Image @relation(fields: [imageId], references: [id])
-
-//   @@unique([cardId, imageId])
-// }
-
-// model CardQuote {
-//   id        Int      @id @unique @default(autoincrement())
-//   cardId    Int
-//   quoteId   Int
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-
-//   Card  Card  @relation(fields: [cardId], references: [id])
-//   Quote Quote @relation(fields: [quoteId], references: [id])
-
-//   @@unique([cardId, quoteId])
-// }
-
-// model CardVoiceRecording {
-//   id               Int      @id @unique @default(autoincrement())
-//   cardId           Int
-//   voiceRecordingId Int
-//   createdAt        DateTime @default(now())
-//   updatedAt        DateTime @updatedAt
-
-//   Card           Card           @relation(fields: [cardId], references: [id])
-//   VoiceRecording VoiceRecording @relation(fields: [voiceRecordingId], references: [id])
-
-//   @@unique([cardId, voiceRecordingId])
-// }
-
-// model CardBackgroundColor {
-//   id                Int      @id @unique @default(autoincrement())
-//   cardId            Int
-//   backgroundColorId Int
-//   createdAt         DateTime @default(now())
-//   updatedAt         DateTime @updatedAt
-
-//   Card            Card            @relation(fields: [cardId], references: [id])
-//   BackgroundColor BackgroundColor @relation(fields: [backgroundColorId], references: [id])
-
-//   @@unique([cardId, backgroundColorId])
-// }
