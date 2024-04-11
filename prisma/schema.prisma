@@ -1,0 +1,189 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Entitäten
+model User {
+  id        Int      @id @unique @default(autoincrement())
+  firstName String
+  lastName  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations to other models
+  profilePictureID  Int?
+  profilePicture    Image?      @relation(fields: [profilePictureID], references: [id])
+  groupsTheUserIsIn GroupUser[]
+}
+
+model Group {
+  id          Int      @id @unique @default(autoincrement())
+  title       String
+  description String?
+  isSolo      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations to other models
+  thumbnailID  Int?
+  thumbnail    Image?      @relation(fields: [thumbnailID], references: [id])
+  cardsInGroup GroupCard[]
+  usersInGroup GroupUser[]
+}
+
+model Card {
+  id          Int      @id @unique @default(autoincrement())
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations to other models
+  groupsCardIsIn        GroupCard[]
+  imagesInCard          CardImage[]
+  quotesInCard          CardQuote[]
+  voiceRecordingsInCard CardVoiceRecording[]
+  backgroundColorOfCard CardBackgroundColor[]
+}
+
+model Image {
+  id        Int      @id @unique @default(autoincrement())
+  url       String   @unique
+  width     Int
+  height    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations to other models
+  scaledDownId                Int?        @unique // ID of the scaled down version of this image
+  scaledDown                  Image?      @relation("ImageScaling", fields: [scaledDownId], references: [id]) // The scaled down version of this image
+  original                    Image?      @relation("ImageScaling") // The original image, of which this is a scaled down version
+  groupsImageIsThumbnailFor   Group[]
+  usersImageIsProfileImageFor User[]
+  cardsImageIsPartOf          CardImage[]
+}
+
+model Quote {
+  id        Int      @id @unique @default(autoincrement())
+  text      String
+  author    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations to other models
+  cardsQuoteIsPartOf CardQuote[]
+}
+
+model VoiceRecording {
+  id        Int      @id @unique @default(autoincrement())
+  url       String   @unique
+  duration  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations to other models
+  cardsVoiceRecordingIsPartOf CardVoiceRecording[]
+}
+
+model BackgroundColor {
+  id        Int      @id @unique @default(autoincrement())
+  value     String   @unique
+  darkText  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations to other models
+  cardsWithThisBackgroundColor CardBackgroundColor[]
+}
+
+// n:m-Relationen
+model GroupUser {
+  id         Int      @id @unique @default(autoincrement())
+  userId     Int
+  groupId    Int
+  isAdmin    Boolean  @default(false)
+  isFavorite Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  User  User  @relation(fields: [userId], references: [id])
+  Group Group @relation(fields: [groupId], references: [id])
+
+  @@unique([userId, groupId])
+}
+
+model GroupCard {
+  id        Int      @id @unique @default(autoincrement())
+  groupId   Int
+  cardId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Group Group @relation(fields: [groupId], references: [id])
+  Card  Card  @relation(fields: [cardId], references: [id])
+
+  @@unique([groupId, cardId])
+}
+
+model CardImage {
+  id        Int      @id @unique @default(autoincrement())
+  cardId    Int
+  imageId   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Card  Card  @relation(fields: [cardId], references: [id])
+  Image Image @relation(fields: [imageId], references: [id])
+
+  @@unique([cardId, imageId])
+}
+
+model CardQuote {
+  id        Int      @id @unique @default(autoincrement())
+  cardId    Int
+  quoteId   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Card  Card  @relation(fields: [cardId], references: [id])
+  Quote Quote @relation(fields: [quoteId], references: [id])
+
+  @@unique([cardId, quoteId])
+}
+
+model CardVoiceRecording {
+  id               Int      @id @unique @default(autoincrement())
+  cardId           Int
+  voiceRecordingId Int
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  Card           Card           @relation(fields: [cardId], references: [id])
+  VoiceRecording VoiceRecording @relation(fields: [voiceRecordingId], references: [id])
+
+  @@unique([cardId, voiceRecordingId])
+}
+
+model CardBackgroundColor {
+  id                Int      @id @unique @default(autoincrement())
+  cardId            Int
+  backgroundColorId Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  Card            Card            @relation(fields: [cardId], references: [id])
+  BackgroundColor BackgroundColor @relation(fields: [backgroundColorId], references: [id])
+
+  @@unique([cardId, backgroundColorId])
+}
