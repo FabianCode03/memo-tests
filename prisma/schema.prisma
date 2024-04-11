@@ -13,177 +13,241 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Entitäten
+// Enteties
 model User {
-  id        Int      @id @unique @default(autoincrement())
-  firstName String
-  lastName  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             BigInt      @id @default(autoincrement())
+  name           String
+  email          String      @unique
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  settingsID     Int?        @unique
+  profileImageID BigInt?     @unique
+  groups         GroupUser[]
+  favoriteCards  Card[]
 
   // Relations to other models
-  profilePictureID  Int?
-  profilePicture    Image?      @relation(fields: [profilePictureID], references: [id])
-  groupsTheUserIsIn GroupUser[]
+  // profilePictureID  Int?
+  // profilePicture    Image?      @relation(fields: [profilePictureID], references: [id])
+  // groupsTheUserIsIn GroupUser[]
+  profileImage Image?    @relation(fields: [profileImageID], references: [id])
+  settings     Settings? @relation(fields: [settingsID], references: [id])
 }
 
 model Group {
-  id          Int      @id @unique @default(autoincrement())
-  title       String
-  description String?
-  isSolo      Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           BigInt      @id @default(autoincrement())
+  title        String
+  description  String?
+  isSolo       Boolean     @default(false)
+  deletionDate DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  thumbnailID  BigInt?     @unique
+  users        GroupUser[]
+  cards        Card[]
 
   // Relations to other models
-  thumbnailID  Int?
-  thumbnail    Image?      @relation(fields: [thumbnailID], references: [id])
-  cardsInGroup GroupCard[]
-  usersInGroup GroupUser[]
+  // thumbnailID  Int?
+  // thumbnail    Image?      @relation(fields: [thumbnailID], references: [id])
+  // cardsInGroup GroupCard[]
+  // usersInGroup GroupUser[]
+  thumbnail Image? @relation(fields: [thumbnailID], references: [id])
 }
 
 model Card {
-  id          Int      @id @unique @default(autoincrement())
-  title       String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                BigInt    @id @default(autoincrement())
+  title             String
+  description       String?
+  deletionDate      DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  groupId           BigInt?
+  backgroundColorId Int
+
+  images          Image[]
+  quotes          Quote[]
+  voiceRecordings VoiceRecording[]
+  favoriteOf      User[]
 
   // Relations to other models
-  groupsCardIsIn        GroupCard[]
-  imagesInCard          CardImage[]
-  quotesInCard          CardQuote[]
-  voiceRecordingsInCard CardVoiceRecording[]
-  backgroundColorOfCard CardBackgroundColor[]
+  // groupsCardIsIn        GroupCard[]
+  // imagesInCard          CardImage[]
+  // quotesInCard          CardQuote[]
+  // voiceRecordingsInCard CardVoiceRecording[]
+  // backgroundColorOfCard CardBackgroundColor[]
+  group           Group?          @relation(fields: [groupId], references: [id])
+  backgroundColor BackgroundColor @relation(fields: [backgroundColorId], references: [id])
 }
 
 model Image {
-  id        Int      @id @unique @default(autoincrement())
-  url       String   @unique
-  width     Int
-  height    Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id                 BigInt   @id @default(autoincrement())
+  url                String   @unique
+  width              Int
+  height             Int
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  cardId             BigInt?
+  profileImageUserID User?
+  thumnailForGroupID Group?
+  originalID         BigInt?  @unique
+  scaledDownID       BigInt?  @unique
   // Relations to other models
-  scaledDownId                Int?        @unique // ID of the scaled down version of this image
-  scaledDown                  Image?      @relation("ImageScaling", fields: [scaledDownId], references: [id]) // The scaled down version of this image
-  original                    Image?      @relation("ImageScaling") // The original image, of which this is a scaled down version
-  groupsImageIsThumbnailFor   Group[]
-  usersImageIsProfileImageFor User[]
-  cardsImageIsPartOf          CardImage[]
+  // scaledDownId                Int?        @unique // ID of the scaled down version of this image
+  // scaledDown                  Image?      @relation("ImageScaling", fields: [scaledDownId], references: [id]) // The scaled down version of this image
+  // original                    Image?      @relation("ImageScaling") // The original image, of which this is a scaled down version
+  // groupsImageIsThumbnailFor   Group[]
+  // usersImageIsProfileImageFor User[]
+  // cardsImageIsPartOf          CardImage[]
+  card               Card?    @relation(fields: [cardId], references: [id])
+  scaledDown         Image?   @relation("ImageScaling")
+  original           Image?   @relation("ImageScaling", fields: [originalID], references: [id])
 }
 
 model Quote {
-  id        Int      @id @unique @default(autoincrement())
+  id        BigInt   @id @default(autoincrement())
   text      String
   author    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  cardId    BigInt?
 
   // Relations to other models
-  cardsQuoteIsPartOf CardQuote[]
+  // cardsQuoteIsPartOf CardQuote[]
+  Card Card? @relation(fields: [cardId], references: [id])
 }
 
 model VoiceRecording {
-  id        Int      @id @unique @default(autoincrement())
+  id        BigInt   @id @default(autoincrement())
   url       String   @unique
-  duration  Int
+  length    BigInt
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  cardId    BigInt?
 
   // Relations to other models
-  cardsVoiceRecordingIsPartOf CardVoiceRecording[]
+  // cardsVoiceRecordingIsPartOf CardVoiceRecording[]
+  Card Card? @relation(fields: [cardId], references: [id])
 }
 
 model BackgroundColor {
-  id        Int      @id @unique @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   value     String   @unique
   darkText  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations to other models
-  cardsWithThisBackgroundColor CardBackgroundColor[]
+  // cardsWithThisBackgroundColor CardBackgroundColor[]
+  Card Card[]
 }
 
-// n:m-Relationen
-model GroupUser {
-  id         Int      @id @unique @default(autoincrement())
-  userId     Int
-  groupId    Int
-  isAdmin    Boolean  @default(false)
-  isFavorite Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+model Settings {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  darkMode  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User?
+}
 
-  User  User  @relation(fields: [userId], references: [id])
-  Group Group @relation(fields: [groupId], references: [id])
+enum Status {
+  ACTIVE_USER
+  ADMIN
+  JOIN_REQUESTED
+  LEFT
+  KICKED
+}
+
+model GroupUser {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt
+  groupId   BigInt
+  status    Status   @default(ACTIVE_USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id])
+  group Group @relation(fields: [groupId], references: [id])
 
   @@unique([userId, groupId])
 }
 
-model GroupCard {
-  id        Int      @id @unique @default(autoincrement())
-  groupId   Int
-  cardId    Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// n:m-Relationen
+// model GroupUser {
+//   id         Int      @id @unique @default(autoincrement())
+//   userId     Int
+//   groupId    Int
+//   isAdmin    Boolean  @default(false)
+//   isFavorite Boolean  @default(false)
+//   createdAt  DateTime @default(now())
+//   updatedAt  DateTime @updatedAt
 
-  Group Group @relation(fields: [groupId], references: [id])
-  Card  Card  @relation(fields: [cardId], references: [id])
+//   User  User  @relation(fields: [userId], references: [id])
+//   Group Group @relation(fields: [groupId], references: [id])
 
-  @@unique([groupId, cardId])
-}
+//   @@unique([userId, groupId])
+// }
 
-model CardImage {
-  id        Int      @id @unique @default(autoincrement())
-  cardId    Int
-  imageId   Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// model GroupCard {
+//   id        Int      @id @unique @default(autoincrement())
+//   groupId   Int
+//   cardId    Int
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
 
-  Card  Card  @relation(fields: [cardId], references: [id])
-  Image Image @relation(fields: [imageId], references: [id])
+//   Group Group @relation(fields: [groupId], references: [id])
+//   Card  Card  @relation(fields: [cardId], references: [id])
 
-  @@unique([cardId, imageId])
-}
+//   @@unique([groupId, cardId])
+// }
 
-model CardQuote {
-  id        Int      @id @unique @default(autoincrement())
-  cardId    Int
-  quoteId   Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// model CardImage {
+//   id        Int      @id @unique @default(autoincrement())
+//   cardId    Int
+//   imageId   Int
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
 
-  Card  Card  @relation(fields: [cardId], references: [id])
-  Quote Quote @relation(fields: [quoteId], references: [id])
+//   Card  Card  @relation(fields: [cardId], references: [id])
+//   Image Image @relation(fields: [imageId], references: [id])
 
-  @@unique([cardId, quoteId])
-}
+//   @@unique([cardId, imageId])
+// }
 
-model CardVoiceRecording {
-  id               Int      @id @unique @default(autoincrement())
-  cardId           Int
-  voiceRecordingId Int
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+// model CardQuote {
+//   id        Int      @id @unique @default(autoincrement())
+//   cardId    Int
+//   quoteId   Int
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
 
-  Card           Card           @relation(fields: [cardId], references: [id])
-  VoiceRecording VoiceRecording @relation(fields: [voiceRecordingId], references: [id])
+//   Card  Card  @relation(fields: [cardId], references: [id])
+//   Quote Quote @relation(fields: [quoteId], references: [id])
 
-  @@unique([cardId, voiceRecordingId])
-}
+//   @@unique([cardId, quoteId])
+// }
 
-model CardBackgroundColor {
-  id                Int      @id @unique @default(autoincrement())
-  cardId            Int
-  backgroundColorId Int
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+// model CardVoiceRecording {
+//   id               Int      @id @unique @default(autoincrement())
+//   cardId           Int
+//   voiceRecordingId Int
+//   createdAt        DateTime @default(now())
+//   updatedAt        DateTime @updatedAt
 
-  Card            Card            @relation(fields: [cardId], references: [id])
-  BackgroundColor BackgroundColor @relation(fields: [backgroundColorId], references: [id])
+//   Card           Card           @relation(fields: [cardId], references: [id])
+//   VoiceRecording VoiceRecording @relation(fields: [voiceRecordingId], references: [id])
 
-  @@unique([cardId, backgroundColorId])
-}
+//   @@unique([cardId, voiceRecordingId])
+// }
+
+// model CardBackgroundColor {
+//   id                Int      @id @unique @default(autoincrement())
+//   cardId            Int
+//   backgroundColorId Int
+//   createdAt         DateTime @default(now())
+//   updatedAt         DateTime @updatedAt
+
+//   Card            Card            @relation(fields: [cardId], references: [id])
+//   BackgroundColor BackgroundColor @relation(fields: [backgroundColorId], references: [id])
+
+//   @@unique([cardId, backgroundColorId])
+// }
