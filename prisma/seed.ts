@@ -1,256 +1,231 @@
-// import { db } from "../src/utils/db.server";
+import { PrismaClient, Status } from "@prisma/client";
+const prisma = new PrismaClient();
 
-// // type definitions for the seed data
-// type User = {
-//   firstName: string;
-//   lastName: string;
-// };
+async function main() {
+  await deleteAllData(); // delete all current data to start fresh
+  await seedDatabase(); // seed the database with new data
+  console.log("Seed completed.");
+}
 
-// type Group = {
-//   title: string;
-//   description: string | null;
-//   isSolo: boolean;
-// };
+main()
+  .catch(e => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
 
-// type Card = {
-//   title: string;
-//   description: string | null;
-// };
+async function seedDatabase() {
+  const backgroundColors = await seedBackgroundColors();
+  await seedUsers();
+  await seedSettings();
+  await seedGroups();
+  await seedImages();
+  await seedQuotes();
+  await seedVoiceRecordings();
+  await seedGroupUser();
+  await seedCards(backgroundColors);
+}
 
-// type Image = {
-//   url: string;
-//   width: number;
-//   height: number;
-// };
+async function deleteAllData() {
+  const models = [
+    "groupUser",
+    "card",
+    "group",
+    "user",
+    "backgroundColor",
+    "settings",
+    "image",
+    "quote",
+    "voiceRecording",
+  ];
 
-// type Quote = {
-//   text: string;
-//   author: string | null;
-// };
+  for (const model of models) {
+    await (prisma as any)[model].deleteMany();
+  }
+}
 
-// type VoiceRecording = {
-//   url: string;
-//   duration: number;
-// };
+async function seedUsers() {
+  const userData = [
+    { name: "Alice", email: "alice@example.com" },
+    { name: "Bob", email: "bob@example.com" },
+    { name: "Charlie", email: "charlie@example.com" },
+    { name: "David", email: "david@example.com" },
+    { name: "Eve", email: "eve@example.com" },
+  ];
 
-// type BackgroundColor = {
-//   value: string;
-//   darkText: boolean;
-// };
+  await prisma.user.createMany({ data: userData });
+}
 
-// type GroupUser = {
-//   groupId: number;
-//   userId: number;
-//   isAdmin: boolean;
-//   isFavorite: boolean;
-// };
+async function seedGroups() {
+  const groupData = [
+    {
+      title: "Meine Reisen",
+      description:
+        "Träumen zwischen Palmen, und Cocktails am Strand, Paradies !!!",
+    },
+    {
+      title: "Atelier",
+      description: "Meine Bilder und künstlerischen Launen, an einem Ort...",
+    },
+    {
+      title: "Mein Schatz und Ich ❤",
+      description: "Unsere schönsten Momente, Dates und Lacher",
+    },
+    {
+      title: "Best Friends Forever",
+      description:
+        "Eine Freundschaft fürs Leben und alles was danach kommen mag",
+    },
+    {
+      title: "Game Night’s",
+      description: "Jeden Donnerstag, Strategie, Siege und Niederlagen",
+    },
+    {
+      title: "Dance Crew",
+      description:
+        "Eine Haufen Tanzverrückter, die Freundschaft über das schönste Hobby der Welt gefunden haben",
+    },
+  ];
 
-// type GroupCard = {
-//   groupId: number;
-//   cardId: number;
-// };
+  await prisma.group.createMany({ data: groupData });
+}
 
-// type CardImage = {
-//   cardId: string;
-//   imageId: number;
-// };
+async function seedImages() {
+  const imageData = [
+    { url: "https://example.com/image1.jpg", width: 800, height: 600 },
+    { url: "https://example.com/image2.jpg", width: 1024, height: 768 },
+    { url: "https://example.com/image3.jpg", width: 1280, height: 720 },
+  ];
 
-// type CardQuote = {
-//   cardId: string;
-//   quoteId: string;
-// };
+  await prisma.image.createMany({ data: imageData });
+}
 
-// type CardVoiceRecording = {
-//   cardId: string;
-//   voiceRecordingId: string;
-// };
+async function seedCards(backgroundColors: any) {
+  const backgroundColorIds = backgroundColors.map((bgColor: any) => bgColor.id);
 
-// type CardBackgroundColors = {
-//   cardId: string;
-//   backgroundColorId: number;
-// };
+  const cardData = [
+    {
+      title: "Kennenlern Abend",
+      description:
+        "Wir haben uns alle kennengelernt, uns über unsere Vorlieben für Spiele unterhalten und ein paar Runden unserer Favoriten angespielt - Das gibts jetzt jeden Do 😎",
+      startDate: new Date(2024, 2, 28),
+      endDate: new Date(2024, 2, 28),
+      backgroundColorId: backgroundColorIds[0],
+    },
+    {
+      title: "Poker Abend",
+      description:
+        "Es war schön sich mal einen Abend lang auf nur Spiel einzustellen, stilvoll Whiskey zu trinken und so richtig das “Las Vegas” Gefühl aufkommen zu lassen.",
+      startDate: new Date(2024, 3, 4),
+      endDate: new Date(2024, 3, 4),
+      backgroundColorId: backgroundColorIds[1],
+    },
+    {
+      title: "Arcade Abend",
+      description:
+        "Unser bisher ausgelassenster Abend mit Klasikern wie Mario Kart und neuen Spielen wie Smash war einfach mega entspannt. Alles mal digital, relaxed auf dem Sofa ubd bis spät in die Nacht. ",
+      startDate: new Date(2024, 11, 7),
+      endDate: new Date(2024, 11, 7),
+      backgroundColorId: backgroundColorIds[2],
+    },
+  ];
 
-// // seed data
-// function getSeedData() {
-//   const users: User[] = [
-//     { firstName: "Alice", lastName: "Smith" },
-//     { firstName: "Bob", lastName: "Jones" },
-//     { firstName: "Charlie", lastName: "Brown" },
-//   ];
+  await prisma.card.createMany({ data: cardData });
+}
 
-//   const groups: Group[] = [
-//     {
-//       title: "Freundesgruppe",
-//       description: "Tanzen fürs leben!",
-//       isSolo: false,
-//     },
-//     { title: "Familiengruppe", description: "Familie!!!", isSolo: false },
-//     { title: "Solo Group", description: "Solo group", isSolo: true },
-//   ];
+async function seedBackgroundColors() {
+  const backgroundColorData = [
+    { value: "red" },
+    { value: "green" },
+    { value: "blue" },
+    { value: "yellow", darkText: true },
+    { value: "purple" },
+    { value: "orange", darkText: true },
+  ];
 
-//   const cards: Card[] = [
-//     {
-//       title: "Quantenphysik",
-//       description:
-//         "Die faszinierende Welt der Quanten und ihrer unvorhersehbaren Natur.",
-//     },
-//     {
-//       title: "Maschinelles Lernen",
-//       description:
-//         "Wie Maschinen lernen, menschenähnliche Aufgaben zu erledigen.",
-//     },
-//     {
-//       title: "Raumfahrt",
-//       description:
-//         "Die unendlichen Weiten des Universums und unsere Bemühungen, es zu erkunden.",
-//     },
-//     {
-//       title: "Nachhaltigkeit",
-//       description:
-//         "Wie wir unseren Planeten für zukünftige Generationen bewahren können.",
-//     },
-//     {
-//       title: "Künstliche Intelligenz",
-//       description:
-//         "Die Auswirkungen von KI auf unsere Gesellschaft und Wirtschaft.",
-//     },
-//     {
-//       title: "Gesundheitstechnologie",
-//       description:
-//         "Die neuesten Fortschritte in der Medizintechnik und Gesundheitsversorgung.",
-//     },
-//     {
-//       title: "Cybersicherheit",
-//       description:
-//         "Die Bedeutung der Sicherheit unserer Daten in der digitalen Welt.",
-//     },
-//     {
-//       title: "Blockchain-Technologie",
-//       description:
-//         "Die Technologie hinter Kryptowährungen und ihre potenziellen Anwendungen.",
-//     },
-//     {
-//       title: "Virtuelle Realität",
-//       description:
-//         "Die aufregenden Möglichkeiten der virtuellen Realität in verschiedenen Branchen.",
-//     },
-//     {
-//       title: "Selbstfahrende Autos",
-//       description:
-//         "Die Technologie hinter autonomen Fahrzeugen und ihre Auswirkungen auf die Gesellschaft.",
-//     },
-//   ];
+  const createdBackgroundColors = [];
 
-//   const images: Image[] = [
-//     { url: "https://example.com/image1.jpg", width: 800, height: 600 },
-//     { url: "https://example.com/image2.jpg", width: 1920, height: 1080 },
-//     { url: "https://example.com/image3.jpg", width: 3840, height: 2160 },
-//   ];
+  for (const bgColor of backgroundColorData) {
+    const createdColor = await prisma.backgroundColor.create({ data: bgColor });
+    createdBackgroundColors.push(createdColor);
+  }
 
-//   const quotes: Quote[] = [
-//     {
-//       text: "Zwei Dinge sind unendlich, das Universum und die menschliche Dummheit, aber bei dem Universum bin ich mir noch nicht ganz sicher.",
-//       author: "Albert Einstein",
-//     },
-//     {
-//       text: "Es ist nicht genug zu wissen, man muss auch anwenden. Es ist nicht genug zu wollen, man muss auch tun.",
-//       author: "Johann Wolfgang von Goethe",
-//     },
-//     {
-//       text: "Der einzige Weg, großartige Arbeit zu leisten, ist zu lieben, was man tut.",
-//       author: "Steve Jobs",
-//     },
-//   ];
+  return createdBackgroundColors;
+}
 
-//   const voiceRecordings: VoiceRecording[] = [
-//     { url: "https://example.com/recording1.mp3", duration: 60 },
-//     { url: "https://example.com/recording2.mp3", duration: 13 },
-//     { url: "https://example.com/recording3.mp3", duration: 89 },
-//   ];
+async function seedQuotes() {
+  const quoteData = [
+    {
+      text: "Noch eine 6 und ich schmeiß dich vom Stuhl 😠",
+      author: "Cleo nach der vierten 6 von Tim bei Kniffel 🎲",
+    },
+    {
+      text: "Hypotheken sind wie Schimmelpilze 🍄‍ - überall und schwer loszuwerden!",
+      author: "Max während Monopoly 🎩",
+    },
+    {
+      text: "Lena geht All-In, ohne ihre Karten anzuschauen 🤣",
+    },
+    {
+      text: "Tim verwechselt seinen Flush mit einer Straße und steigt aus 🃏, obwohl er haushoch gewonnen hätte ",
+    },
+    {
+      text: "Cleo gewinnt in einem spektakulären Showdown mit zwei Königen gegen Lena🥇",
+    },
+    {
+      text: "Cleo verschläft den Anfang des Rennens 🚦und wird Letzte 🏁 ",
+    },
+    {
+      text: "Dieses Caos🌪️ ist ja noch schlimmer als dein Fahrstil 🏎",
+      author: "Lena zu Tim während sie auf eine Chips Tüte am Boden tritt 🥲",
+    },
+    {
+      text: "Alle waren sich einig das Lenas Geschmack, was Videospiele 🎮 angeht, mehr als unterirdisch ist 💩",
+    },
+  ];
 
-//   const backgroundColors: BackgroundColor[] = [
-//     { value: "#FFFFFF", darkText: true },
-//     { value: "#000000", darkText: false },
-//     { value: "#FF0000", darkText: true },
-//   ];
+  await prisma.quote.createMany({ data: quoteData });
+}
 
-//   const groupUsers: GroupUser[] = [
-//     { groupId: 1, userId: 1, isAdmin: true, isFavorite: true },
-//     { groupId: 1, userId: 2, isAdmin: false, isFavorite: false },
-//     { groupId: 2, userId: 2, isAdmin: true, isFavorite: true },
-//     { groupId: 2, userId: 3, isAdmin: false, isFavorite: false },
-//     { groupId: 3, userId: 3, isAdmin: true, isFavorite: true },
-//   ];
+async function seedVoiceRecordings() {
+  const voiceRecordingData = [
+    { url: "https://example.com/recording1.mp3", length: 120 },
+    { url: "https://example.com/recording2.mp3", length: 180 },
+    { url: "https://example.com/recording3.mp3", length: 240 },
+  ];
 
-//   const groupCards: GroupCard[] = [
-//     { groupId: 1, cardId: 1 },
-//     { groupId: 1, cardId: 2 },
-//     { groupId: 2, cardId: 2 },
-//     { groupId: 2, cardId: 3 },
-//     { groupId: 3, cardId: 3 },
-//   ];
+  await prisma.voiceRecording.createMany({ data: voiceRecordingData });
+}
 
-//   const cardImages: CardImage[] = [
-//     { cardId: 1, imageId: 1 },
-//     { cardId: 2, imageId: 2 },
-//     { cardId: 3, imageId: 3 },
-//   ];
+async function seedGroupUser() {
+  const users = await prisma.user.findMany();
+  const groups = await prisma.group.findMany();
 
-//   const cardQuotes: CardQuote[] = [
-//     { cardId: 1, quoteId: 1 },
-//     { cardId: 2, quoteId: 2 },
-//     { cardId: 3, quoteId: 3 },
-//   ];
+  // Stellen Sie sicher, dass genügend User und Groups vorhanden sind
+  if (users.length < 5 || groups.length < 1) {
+    console.error("Nicht genügend User oder Groups vorhanden");
+    return;
+  }
 
-//   const cardVoiceRecordings: CardVoiceRecording[] = [
-//     { cardId: 1, voiceRecordingId: 1 },
-//     { cardId: 2, voiceRecordingId: 2 },
-//     { cardId: 3, voiceRecordingId: 3 },
-//   ];
+  const groupUserData = users.slice(0, 5).map(user => ({
+    userId: user.id,
+    groupId: groups[0].id,
+    status: Status.ACTIVE_USER,
+  }));
 
-//   const cardBackgroundColors: CardBackgroundColors[] = [
-//     { cardId: 1, backgroundColorId: 1 },
-//     { cardId: 2, backgroundColorId: 2 },
-//     { cardId: 3, backgroundColorId: 3 },
-//   ];
+  await prisma.groupUser.createMany({ data: groupUserData });
+}
 
-//   return {
-//     users,
-//     groups,
-//     cards,
-//     images,
-//     quotes,
-//     voiceRecordings,
-//     backgroundColors,
-//     groupUsers,
-//     groupCards,
-//     cardImages,
-//     cardQuotes,
-//     cardVoiceRecordings,
-//     cardBackgroundColors,
-//   };
-// }
+async function seedSettings() {
+  const user = await prisma.user.findFirst();
 
-// // seed the database
-// async function seed() {
-//   const data = getSeedData();
+  if (!user || !user.id) {
+    throw new Error("User not found");
+  }
 
-//   // insert seed data into the database
-//   await db.user.createMany({ data: data.users });
-//   await db.group.createMany({ data: data.groups });
-//   await db.card.createMany({ data: data.cards });
-//   await db.image.createMany({ data: data.images });
-//   await db.quote.createMany({ data: data.quotes });
-//   await db.voiceRecording.createMany({ data: data.voiceRecordings });
-//   await db.backgroundColor.createMany({ data: data.backgroundColors });
-//   await db.groupUser.createMany({ data: data.groupUsers });
-//   await db.groupCard.createMany({ data: data.groupCards });
-//   await db.cardImage.createMany({ data: data.cardImages });
-//   await db.cardQuote.createMany({ data: data.cardQuotes });
-//   await db.cardVoiceRecording.createMany({ data: data.cardVoiceRecordings });
-//   await db.cardBackgroundColor.createMany({ data: data.cardBackgroundColors });
+  const settingData = [{ userId: user.id, darkMode: true }];
 
-//   console.log("Seed data inserted successfully");
-// }
-
-// seed();
+  await prisma.settings.createMany({ data: settingData });
+}

@@ -2,21 +2,28 @@ import { PrismaClient } from "@prisma/client";
 import { log } from "console";
 const prisma = new PrismaClient();
 
+// code passed to main() will be directly executed on the database
 async function main() {
-  // delete all data
-  //   await prisma.user.deleteMany({});
-  //   await prisma.group.deleteMany({});
-  //   await prisma.card.deleteMany({});
-  //   await prisma.image.deleteMany({});
-  //   await prisma.quote.deleteMany({});
-  //   await prisma.voiceRecording.deleteMany({});
-  //   await prisma.backgroundColor.deleteMany({});
-  //   await prisma.groupUser.deleteMany({});
-  //   await prisma.groupCard.deleteMany({});
-  //   await prisma.cardImage.deleteMany({});
-  //   await prisma.cardQuote.deleteMany({});
-  //   await prisma.cardVoiceRecording.deleteMany({});
-  //   await prisma.cardBackgroundColor.deleteMany({});
+  await returnAllDatabaseTables();
+}
+
+async function returnAllDatabaseTables() {
+  const models = [
+    "user",
+    "group",
+    "image",
+    "quote",
+    "voiceRecording",
+    "groupUser",
+    "card",
+    "settings",
+    "backgroundColor",
+  ];
+
+  for (const model of models) {
+    const records = await (prisma as any)[model].findMany();
+    console.log(records);
+  }
 }
 
 main()
